@@ -17,10 +17,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('API SAHELYS')
     .setDescription(
-      "API de la plateforme SAHELYS de dématérialisation et de gestion des fiches d'intervention. " +
-        'Couvre le référentiel clients/sites/contrats/projets/équipements/applications, la gestion des ' +
-        "interventions (cycle de vie, techniciens affectés, formulaires dynamiques, pièces jointes, signatures) " +
-        "ainsi que l'authentification et la gestion des utilisateurs.",
+      "API de la plateforme SAHELYS de dématérialisation et de gestion des fiches d'intervention",
     )
     .setVersion('1.0')
     .addBearerAuth(
