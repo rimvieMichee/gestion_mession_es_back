@@ -4,7 +4,10 @@ services:
     env: node
     region: frankfurt
     plan: free
-    buildCommand: npm install && npm run build && npx prisma migrate deploy
+    # --include=dev est indispensable : NODE_ENV=production (défini plus bas)
+    # ferait autrement sauter les devDependencies (dont @nestjs/cli, qui fournit
+    # la commande "nest" utilisée par "npm run build") => "sh: nest: not found".
+    buildCommand: npm install --include=dev && npm run build && npx prisma migrate deploy
     startCommand: npm run start:prod
     envVars:
       - key: NODE_ENV
