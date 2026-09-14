@@ -13,6 +13,12 @@ dist
 # Prisma generated client
 /generated/prisma
 
+# Skills AI (auto-générés par Prisma pour Claude/Windsurf/agents) — pas utiles au repo
+.agents/skills
+.claude/skills
+.windsurf/skills
+skills-lock.json
+
 # Tests / coverage
 coverage
 

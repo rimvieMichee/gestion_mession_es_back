@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: sahelys-api
+    env: node
+    region: frankfurt
+    plan: free
+    buildCommand: npm install && npm run build && npx prisma migrate deploy
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: SUPABASE_URL
+        value: https://zlnzhzzvysgbpenooibg.supabase.co
+      - key: SUPABASE_PUBLISHABLE_KEY
+        value: sb_publishable_7p8f3uOTNm7n52e0ILFF5g_Is80DC1V
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
