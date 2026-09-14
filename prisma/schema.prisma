@@ -1,0 +1,407 @@
+// Schema Prisma — Plateforme SAHELYS de gestion des fiches d'intervention
+// Traduction directe du dictionnaire de données / MCD / MLD du dossier technique.
+// Les noms de colonnes/tables sont mappés (@map/@@map) sur les noms du dictionnaire
+// pour garder une correspondance 1:1 avec le dossier, tout en gardant du camelCase
+// idiomatique côté Prisma Client / TypeScript.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums — champs à liste de valeurs fermée explicitement décrits dans le
+// dictionnaire de données (statut, mode, criticité, type de signataire).
+// Le champ type_donnee de CHAMP_PERSONNALISE reste volontairement une String
+// (moteur de formulaires dynamiques : l'admin doit pouvoir ajouter des types
+// sans migration de schéma).
+// ---------------------------------------------------------------------------
+
+/// Cycle de vie d'une intervention (cf. diagramme d'état, section 6 du dossier).
+enum StatutIntervention {
+  NOUVELLE
+  PLANIFIEE
+  AFFECTEE
+  EN_COURS
+  EN_ATTENTE
+  TERMINEE
+  EN_ATTENTE_VALIDATION_CLIENT
+  VALIDEE
+  CLOTUREE
+}
+
+enum ModeIntervention {
+  SUR_SITE
+  A_DISTANCE
+}
+
+enum NiveauCriticite {
+  FAIBLE
+  MOYEN
+  ELEVE
+  CRITIQUE
+}
+
+enum StatutIncident {
+  OUVERT
+  EN_COURS
+  RESOLU
+}
+
+enum TypeSignataire {
+  TECHNICIEN
+  CLIENT
+}
+
+// ---------------------------------------------------------------------------
+// Référentiel Clients & Ressources (MCD 3.1)
+// ---------------------------------------------------------------------------
+
+model Client {
+  id              Int      @id @default(autoincrement()) @map("id_client")
+  nom             String
+  adresse         String   @db.Text
+  secteurActivite String?  @map("secteur_activite")
+  email           String?
+  telephone       String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  sites         Site[]
+  contacts      Contact[]
+  contrats      Contrat[]
+  projets       Projet[]
+  equipements   Equipement[]
+  applications  Application[]
+  utilisateurs  Utilisateur[]
+  interventions Intervention[]
+
+  @@map("client")
+}
+
+model Site {
+  id       Int    @id @default(autoincrement()) @map("id_site")
+  nom      String
+  adresse  String @db.Text
+  clientId Int    @map("id_client")
+
+  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  equipements   Equipement[]
+  interventions Intervention[]
+
+  @@map("site")
+}
+
+model Contact {
+  id        Int     @id @default(autoincrement()) @map("id_contact")
+  nom       String
+  fonction  String?
+  email     String?
+  telephone String?
+  clientId  Int     @map("id_client")
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("contact")
+}
+
+model Contrat {
+  id        Int      @id @default(autoincrement()) @map("id_contrat")
+  reference String
+  typeSla   String?  @map("type_sla")
+  dateDebut DateTime @map("date_debut") @db.Date
+  dateFin   DateTime @map("date_fin") @db.Date
+  clientId  Int      @map("id_client")
+
+  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  interventions Intervention[]
+
+  @@map("contrat")
+}
+
+model Projet {
+  id             Int       @id @default(autoincrement()) @map("id_projet")
+  nom            String
+  description    String?   @db.Text
+  dateDebut      DateTime  @map("date_debut") @db.Date
+  dateFin        DateTime? @map("date_fin") @db.Date
+  tauxAvancement Decimal   @default(0) @map("taux_avancement") @db.Decimal(5, 2)
+  clientId       Int       @map("id_client")
+
+  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  interventions Intervention[]
+
+  @@map("projet")
+}
+
+model Equipement {
+  id             Int     @id @default(autoincrement()) @map("id_equipement")
+  nom            String
+  typeEquipement String  @map("type_equipement")
+  numeroSerie    String? @map("numero_serie")
+  clientId       Int     @map("id_client")
+  siteId         Int?    @map("id_site")
+
+  client             Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  site               Site?               @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  incidents          Incident[]
+  fichesConnaissance FicheConnaissance[]
+
+  @@map("equipement")
+}
+
+model Application {
+  id       Int     @id @default(autoincrement()) @map("id_application")
+  nom      String
+  version  String?
+  clientId Int     @map("id_client")
+
+  client             Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  incidents          Incident[]
+  fichesConnaissance FicheConnaissance[]
+
+  @@map("application")
+}
+
+// ---------------------------------------------------------------------------
+// Utilisateurs & rôles
+// ---------------------------------------------------------------------------
+
+/// Table de rôles (et non un enum) : l'administrateur doit pouvoir gérer les
+/// rôles/droits depuis la plateforme (cf. cas d'utilisation Administrateur).
+model Role {
+  id      Int    @id @default(autoincrement()) @map("id_role")
+  libelle String @unique
+
+  utilisateurs Utilisateur[]
+
+  @@map("role")
+}
+
+model Utilisateur {
+  id         Int    @id @default(autoincrement()) @map("id_utilisateur")
+  nom        String
+  prenom     String
+  email      String @unique
+  motDePasse String @map("mot_de_passe")
+  roleId     Int    @map("id_role")
+  clientId   Int?   @map("id_client")
+
+  role   Role    @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  client Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  interventionsResponsable Intervention[]           @relation("InterventionResponsable")
+  interventionsTechnicien  InterventionTechnicien[]
+  notifications            Notification[]
+  historiqueStatuts        HistoriqueStatut[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("utilisateur")
+}
+
+// ---------------------------------------------------------------------------
+// Moteur de formulaires dynamiques
+// ---------------------------------------------------------------------------
+
+model TypeFiche {
+  id          Int     @id @default(autoincrement()) @map("id_type_fiche")
+  libelle     String
+  description String? @db.Text
+
+  champsPersonnalises ChampPersonnalise[]
+  interventions       Intervention[]
+
+  @@map("type_fiche")
+}
+
+model ChampPersonnalise {
+  id          Int     @id @default(autoincrement()) @map("id_champ")
+  libelle     String
+  /// Texte, nombre, date, liste, etc. — volontairement une String libre :
+  /// c'est le point d'extension du moteur de formulaires dynamiques.
+  typeDonnee  String  @map("type_donnee")
+  obligatoire Boolean @default(false)
+  typeFicheId Int     @map("id_type_fiche")
+
+  typeFiche    TypeFiche     @relation(fields: [typeFicheId], references: [id], onDelete: Cascade)
+  valeursChamp ValeurChamp[]
+
+  @@map("champ_personnalise")
+}
+
+// ---------------------------------------------------------------------------
+// Cœur métier : interventions
+// ---------------------------------------------------------------------------
+
+model Intervention {
+  id                     Int                @id @default(autoincrement()) @map("id_intervention")
+  numero                 String             @unique
+  date                   DateTime           @db.Date
+  heureDebut             DateTime?          @map("heure_debut")
+  heureFin               DateTime?          @map("heure_fin")
+  duree                  Decimal?           @db.Decimal(6, 2)
+  mode                   ModeIntervention
+  statut                 StatutIntervention @default(NOUVELLE)
+  objet                  String
+  descriptionDemande     String?            @map("description_demande") @db.Text
+  travauxRealises        String?            @map("travaux_realises") @db.Text
+  difficultesRencontrees String?            @map("difficultes_rencontrees") @db.Text
+  observationsTechnicien String?            @map("observations_technicien") @db.Text
+  observationsClient     String?            @map("observations_client") @db.Text
+  recommandations        String?            @db.Text
+
+  clientId      Int  @map("id_client")
+  siteId        Int  @map("id_site")
+  contratId     Int? @map("id_contrat")
+  projetId      Int? @map("id_projet")
+  typeFicheId   Int  @map("id_type_fiche")
+  responsableId Int  @map("id_responsable")
+
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  site        Site        @relation(fields: [siteId], references: [id], onDelete: Restrict)
+  contrat     Contrat?    @relation(fields: [contratId], references: [id], onDelete: SetNull)
+  projet      Projet?     @relation(fields: [projetId], references: [id], onDelete: SetNull)
+  typeFiche   TypeFiche   @relation(fields: [typeFicheId], references: [id], onDelete: Restrict)
+  responsable Utilisateur @relation("InterventionResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
+
+  techniciens       InterventionTechnicien[]
+  valeursChamp      ValeurChamp[]
+  piecesJointes     PieceJointe[]
+  signatures        Signature[]
+  incidents         Incident[]
+  ficheConnaissance FicheConnaissance?
+  notifications     Notification[]
+  historiqueStatuts HistoriqueStatut[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("intervention")
+}
+
+/// Table d'association : techniciens mobilisés sur une intervention.
+model InterventionTechnicien {
+  interventionId      Int     @map("id_intervention")
+  technicienId        Int     @map("id_technicien")
+  roleSurIntervention String? @map("role_sur_intervention")
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  technicien   Utilisateur  @relation(fields: [technicienId], references: [id], onDelete: Restrict)
+
+  @@id([interventionId, technicienId])
+  @@map("intervention_technicien")
+}
+
+model ValeurChamp {
+  id             Int    @id @default(autoincrement()) @map("id_valeur")
+  valeur         String @db.Text
+  interventionId Int    @map("id_intervention")
+  champId        Int    @map("id_champ")
+
+  intervention Intervention      @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  champ        ChampPersonnalise @relation(fields: [champId], references: [id], onDelete: Cascade)
+
+  @@unique([interventionId, champId])
+  @@map("valeur_champ")
+}
+
+model PieceJointe {
+  id             Int      @id @default(autoincrement()) @map("id_piece_jointe")
+  typeFichier    String   @map("type_fichier")
+  chemin         String   @db.Text
+  dateAjout      DateTime @default(now()) @map("date_ajout")
+  interventionId Int      @map("id_intervention")
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@map("piece_jointe")
+}
+
+model Signature {
+  id             Int            @id @default(autoincrement()) @map("id_signature")
+  typeSignataire TypeSignataire @map("type_signataire")
+  nomSignataire  String         @map("nom_signataire")
+  fonction       String?
+  imageSignature String         @map("image_signature") @db.Text
+  dateHeure      DateTime       @default(now()) @map("date_heure")
+  interventionId Int            @map("id_intervention")
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@map("signature")
+}
+
+model Incident {
+  id              Int             @id @default(autoincrement()) @map("id_incident")
+  description     String          @db.Text
+  niveauCriticite NiveauCriticite @map("niveau_criticite")
+  statut          StatutIncident  @default(OUVERT)
+  interventionId  Int             @map("id_intervention")
+  equipementId    Int?            @map("id_equipement")
+  applicationId   Int?            @map("id_application")
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  equipement   Equipement?  @relation(fields: [equipementId], references: [id], onDelete: SetNull)
+  application  Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("incident")
+}
+
+model FicheConnaissance {
+  id             Int     @id @default(autoincrement()) @map("id_fiche_connaissance")
+  probleme       String  @db.Text
+  diagnostic     String  @db.Text
+  cause          String? @db.Text
+  solution       String  @db.Text
+  procedure      String? @db.Text
+  recommandation String? @db.Text
+  interventionId Int     @unique @map("id_intervention")
+  equipementId   Int?    @map("id_equipement")
+  applicationId  Int?    @map("id_application")
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  equipement   Equipement?  @relation(fields: [equipementId], references: [id], onDelete: SetNull)
+  application  Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("fiche_connaissance")
+}
+
+model Notification {
+  id             Int      @id @default(autoincrement()) @map("id_notification")
+  message        String   @db.Text
+  dateCreation   DateTime @default(now()) @map("date_creation")
+  lu             Boolean  @default(false)
+  utilisateurId  Int      @map("id_utilisateur")
+  interventionId Int?     @map("id_intervention")
+
+  utilisateur  Utilisateur   @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  intervention Intervention? @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@map("notification")
+}
+
+/// Trace de chaque changement de statut d'une intervention (audit / traçabilité
+/// obligatoire dès qu'une fiche est validée par le client — règle de gestion 3.3).
+model HistoriqueStatut {
+  id             Int                @id @default(autoincrement()) @map("id_historique")
+  statut         StatutIntervention
+  dateChangement DateTime           @default(now()) @map("date_changement")
+  interventionId Int                @map("id_intervention")
+  utilisateurId  Int                @map("id_utilisateur")
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  utilisateur  Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
+
+  @@map("historique_statut")
+}

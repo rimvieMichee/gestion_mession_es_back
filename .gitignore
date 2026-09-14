@@ -1,0 +1,23 @@
+# Node
+node_modules
+npm-debug.log*
+
+# Nest build output
+dist
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Prisma generated client
+/generated/prisma
+
+# Tests / coverage
+coverage
+
+# IDE / OS
+.idea
+.vscode
+.DS_Store
+*.log
