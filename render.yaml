@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sahelys-api
+    name: sahelys-api-interventions-mission
     env: node
     region: frankfurt
     plan: free
