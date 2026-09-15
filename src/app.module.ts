@@ -21,6 +21,8 @@ import { RolesModule } from './roles/roles.module';
 import { IncidentsModule } from './incidents/incidents.module';
 import { FichesConnaissanceModule } from './fiches-connaissance/fiches-connaissance.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { MaterielsModule } from './materiels/materiels.module';
+import { PlansMaintenanceModule } from './plans-maintenance/plans-maintenance.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     IncidentsModule,
     FichesConnaissanceModule,
     NotificationsModule,
+    MaterielsModule,
+    PlansMaintenanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

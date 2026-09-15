@@ -278,6 +278,7 @@ model Intervention {
   ficheConnaissance FicheConnaissance?
   notifications     Notification[]
   historiqueStatuts HistoriqueStatut[]
+  mouvementsStock   MouvementStock[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -404,4 +405,86 @@ model HistoriqueStatut {
   utilisateur  Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
 
   @@map("historique_statut")
+}
+
+// ---------------------------------------------------------------------------
+// Inventaire & maintenance préventive
+// ---------------------------------------------------------------------------
+// ⚠️ Ces deux modèles ne font PAS partie du dossier technique d'origine (pas
+// de gestion de stock de pièces détachées ni de planification récurrente
+// dans le MCD/MLD initial). Ajoutés pour alimenter les modules "Inventaire"
+// et "Plans de maintenance" déjà présents côté web/mobile (repris d'un
+// prototype antérieur) — voir demande explicite du 2026-09-15.
+
+enum TypeMouvementStock {
+  ENTREE
+  SORTIE
+  AJUSTEMENT
+}
+
+enum FrequenceMaintenance {
+  HEBDOMADAIRE
+  MENSUEL
+  TRIMESTRIEL
+  ANNUEL
+}
+
+/// Pièce détachée / consommable géré en stock.
+model Materiel {
+  id           Int      @id @default(autoincrement()) @map("id_materiel")
+  nom          String
+  reference    String   @unique
+  categorie    String
+  stockActuel  Int      @default(0) @map("stock_actuel")
+  seuilMin     Int      @map("seuil_min")
+  seuilMax     Int      @map("seuil_max")
+  prixUnitaire Decimal  @db.Decimal(12, 2) @map("prix_unitaire")
+  fournisseur  String
+  emplacement  String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  mouvements MouvementStock[]
+
+  @@map("materiel")
+}
+
+/// Entrée/sortie/ajustement de stock — trace chaque variation de [Materiel.stockActuel].
+model MouvementStock {
+  id             Int                @id @default(autoincrement()) @map("id_mouvement")
+  materielId     Int                @map("id_materiel")
+  type           TypeMouvementStock
+  quantite       Int
+  motif          String?
+  interventionId Int?               @map("id_intervention")
+  createdAt      DateTime           @default(now()) @map("created_at")
+
+  materiel     Materiel      @relation(fields: [materielId], references: [id], onDelete: Cascade)
+  intervention Intervention? @relation(fields: [interventionId], references: [id], onDelete: SetNull)
+
+  @@map("mouvement_stock")
+}
+
+/// Plan de maintenance préventive récurrent (généralise des interventions
+/// préventives à échéance régulière — sites/équipements/pièces requises
+/// laissés en texte libre plutôt qu'en relations, faute de modélisation
+/// dédiée dans le dossier technique).
+model PlanMaintenance {
+  id                 Int                  @id @default(autoincrement()) @map("id_plan_maintenance")
+  nom                String
+  description        String               @db.Text
+  typeEquipement     String               @map("type_equipement")
+  equipementIds      String[]             @default([]) @map("id_equipements")
+  sites              String[]             @default([])
+  frequence          FrequenceMaintenance
+  prochaineExecution DateTime             @map("prochaine_execution")
+  derniereExecution  DateTime?            @map("derniere_execution")
+  actif              Boolean              @default(true)
+  dureeEstimee       Int                  @map("duree_estimee")
+  piecesRequises     String[]             @default([]) @map("pieces_requises")
+  instructions       String               @db.Text
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+
+  @@map("plan_maintenance")
 }
