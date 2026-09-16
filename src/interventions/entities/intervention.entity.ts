@@ -12,6 +12,7 @@ import {
   ModeIntervention,
   NatureIntervention,
   NiveauCriticite,
+  PrioriteIntervention,
   StatutIntervention,
 } from '../../../generated/prisma/enums';
 
@@ -162,6 +163,9 @@ export class InterventionEntity {
 
   @ApiPropertyOptional({ enum: NiveauCriticite, nullable: true, example: NiveauCriticite.MOYEN })
   niveauRisque: NiveauCriticite | null;
+
+  @ApiPropertyOptional({ enum: PrioriteIntervention, nullable: true, example: PrioriteIntervention.NORMALE })
+  priorite: PrioriteIntervention | null;
 
   @ApiPropertyOptional({ type: String, nullable: true, example: 'Défaillance électrique' })
   typeDefaillance: string | null;

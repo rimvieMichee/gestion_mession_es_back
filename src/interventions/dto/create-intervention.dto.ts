@@ -9,7 +9,12 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { ModeIntervention, NatureIntervention, NiveauCriticite } from '../../../generated/prisma/enums';
+import {
+  ModeIntervention,
+  NatureIntervention,
+  NiveauCriticite,
+  PrioriteIntervention,
+} from '../../../generated/prisma/enums';
 
 export class CreateInterventionDto {
   /** Date de l'intervention (ISO 8601) */
@@ -96,6 +101,12 @@ export class CreateInterventionDto {
   @IsOptional()
   @IsEnum(NiveauCriticite)
   niveauRisque?: NiveauCriticite;
+
+  /** Niveau de priorité (distinct du niveau de risque) */
+  @ApiPropertyOptional({ enum: PrioriteIntervention, example: PrioriteIntervention.NORMALE })
+  @IsOptional()
+  @IsEnum(PrioriteIntervention)
+  priorite?: PrioriteIntervention;
 
   /** Type de défaillance constatée (pertinent pour une intervention curative) */
   @ApiPropertyOptional({ example: 'Défaillance électrique' })

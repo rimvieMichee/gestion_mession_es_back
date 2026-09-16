@@ -46,6 +46,14 @@ enum NatureIntervention {
   PREVENTIVE
 }
 
+/// Hors dossier technique d'origine — niveau de priorité (distinct du
+/// niveau de risque) demandé pour le formulaire de création de mission.
+enum PrioriteIntervention {
+  NORMALE
+  URGENTE
+  CRITIQUE
+}
+
 enum NiveauCriticite {
   FAIBLE
   MOYEN
@@ -266,9 +274,10 @@ model Intervention {
   // ⚠️ Champs hors dossier technique d'origine, ajoutés à la demande du
   // 2026-09-16 pour le formulaire de création de mission du panneau web
   // (catégorisation libre côté manager, sans lien avec le référentiel Équipement).
-  natureIntervention NatureIntervention? @map("nature_intervention")
-  typeEquipement     String?             @map("type_equipement_libre")
-  niveauRisque       NiveauCriticite?    @map("niveau_risque")
+  natureIntervention NatureIntervention?   @map("nature_intervention")
+  typeEquipement     String?               @map("type_equipement_libre")
+  niveauRisque       NiveauCriticite?      @map("niveau_risque")
+  priorite           PrioriteIntervention? @map("priorite")
   typeDefaillance    String?             @map("type_defaillance")
   causeRacine        String?             @map("cause_racine") @db.Text
   datePlanifiee      DateTime?           @map("date_planifiee")

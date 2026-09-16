@@ -71,6 +71,7 @@ export class InterventionsService {
         natureIntervention: dto.natureIntervention,
         typeEquipement: dto.typeEquipement,
         niveauRisque: dto.niveauRisque,
+        priorite: dto.priorite,
         typeDefaillance: dto.typeDefaillance,
         causeRacine: dto.causeRacine,
         datePlanifiee: dto.datePlanifiee ? new Date(dto.datePlanifiee) : undefined,
