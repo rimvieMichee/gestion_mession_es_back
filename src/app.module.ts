@@ -21,6 +21,7 @@ import { RolesModule } from './roles/roles.module';
 import { IncidentsModule } from './incidents/incidents.module';
 import { FichesConnaissanceModule } from './fiches-connaissance/fiches-connaissance.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { EtapesInterventionModule } from './etapes-intervention/etapes-intervention.module';
 import { MaterielsModule } from './materiels/materiels.module';
 import { PlansMaintenanceModule } from './plans-maintenance/plans-maintenance.module';
 import { InterventionMaterielsModule } from './intervention-materiels/intervention-materiels.module';
@@ -50,6 +51,7 @@ import { InterventionMaterielsModule } from './intervention-materiels/interventi
     MaterielsModule,
     PlansMaintenanceModule,
     InterventionMaterielsModule,
+    EtapesInterventionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

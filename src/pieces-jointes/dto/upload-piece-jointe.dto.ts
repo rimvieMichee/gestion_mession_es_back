@@ -1,22 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsInt, IsOptional, IsString } from 'class-validator';
 
-export class CreatePieceJointeDto {
+/** Champs texte envoyés à côté du fichier binaire, en multipart/form-data. */
+export class UploadPieceJointeDto {
   /** Type de fichier joint */
   @ApiProperty({ example: 'Photo', description: 'Photo, PDF, document, etc.' })
   @IsString()
   typeFichier: string;
-
-  /**
-   * Chemin ou URL du fichier déjà stocké. Pour téléverser un fichier réel
-   * depuis l'app, utiliser `POST .../pieces-jointes/upload` à la place.
-   */
-  @ApiProperty({
-    example: 'https://storage.sahelys.com/interventions/INT-2026-00042/photo-avant.jpg',
-  })
-  @IsString()
-  chemin: string;
 
   /** Étape de mission à laquelle rattacher cette pièce jointe, le cas échéant */
   @ApiPropertyOptional({ example: 2, description: 'id_etape' })

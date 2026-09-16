@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PieceJointeEntity {
   @ApiProperty({ example: 1 })
@@ -20,4 +20,8 @@ export class PieceJointeEntity {
   /** Intervention concernée */
   @ApiProperty({ example: 1, description: 'id_intervention' })
   interventionId: number;
+
+  /** Étape de mission concernée, si la pièce jointe y est rattachée */
+  @ApiPropertyOptional({ example: 2, description: 'id_etape' })
+  etapeId: number | null;
 }

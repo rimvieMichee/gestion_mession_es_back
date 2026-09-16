@@ -1,21 +1,60 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import { extname } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import type { AuthenticatedUser } from '../auth/types/jwt-payload.type';
 import {
   assertCanActOnIntervention,
   assertCanViewIntervention,
 } from '../interventions/interventions.authorization';
 import { CreatePieceJointeDto } from './dto/create-piece-jointe.dto';
+import { UploadPieceJointeDto } from './dto/upload-piece-jointe.dto';
 
 @Injectable()
 export class PiecesJointesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
   async create(interventionId: number, dto: CreatePieceJointeDto, user: AuthenticatedUser) {
     const intervention = await this.getInterventionOrThrow(interventionId);
     assertCanActOnIntervention(user, intervention);
+    if (dto.etapeId !== undefined) {
+      await this.getEtapeOrThrow(interventionId, dto.etapeId);
+    }
     return this.prisma.pieceJointe.create({
       data: { ...dto, interventionId },
+    });
+  }
+
+  /** Téléverse un fichier réel (photo/document) et l'attache à l'intervention. */
+  async upload(
+    interventionId: number,
+    file: Express.Multer.File | undefined,
+    dto: UploadPieceJointeDto,
+    user: AuthenticatedUser,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Aucun fichier reçu (champ attendu : "file").');
+    }
+    const intervention = await this.getInterventionOrThrow(interventionId);
+    assertCanActOnIntervention(user, intervention);
+    if (dto.etapeId !== undefined) {
+      await this.getEtapeOrThrow(interventionId, dto.etapeId);
+    }
+
+    const path = `interventions/${interventionId}/${randomUUID()}${extname(file.originalname)}`;
+    const chemin = await this.storageService.uploadFile(path, file.buffer, file.mimetype);
+
+    return this.prisma.pieceJointe.create({
+      data: {
+        typeFichier: dto.typeFichier,
+        chemin,
+        interventionId,
+        etapeId: dto.etapeId,
+      },
     });
   }
 
@@ -48,5 +87,13 @@ export class PiecesJointesService {
       throw new NotFoundException(`Intervention ${interventionId} introuvable`);
     }
     return intervention;
+  }
+
+  private async getEtapeOrThrow(interventionId: number, etapeId: number) {
+    const etape = await this.prisma.etapeIntervention.findUnique({ where: { id: etapeId } });
+    if (!etape || etape.interventionId !== interventionId) {
+      throw new NotFoundException(`Étape ${etapeId} introuvable pour cette intervention`);
+    }
+    return etape;
   }
 }

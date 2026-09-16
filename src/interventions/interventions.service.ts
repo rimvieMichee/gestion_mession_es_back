@@ -17,6 +17,12 @@ import { UpdateCompteRenduDto } from './dto/update-compte-rendu.dto';
 import { UpdateInterventionDto } from './dto/update-intervention.dto';
 import { UpsertValeursChampDto } from './dto/upsert-valeurs-champ.dto';
 
+// ⚠️ Hors dossier technique d'origine : voir `EtapeIntervention` dans le
+// schéma. Ces 3 étapes sont créées automatiquement pour chaque intervention
+// et reprennent la timeline déjà affichée par le mobile (Début / En cours /
+// Terminé), désormais persistée au lieu d'être recalculée depuis le statut.
+const TITRES_ETAPES_PAR_DEFAUT = ['Début', 'En cours', 'Terminé'];
+
 const FULL_INCLUDE = {
   client: true,
   site: true,
@@ -30,6 +36,10 @@ const FULL_INCLUDE = {
   valeursChamp: { include: { champ: true } },
   piecesJointes: true,
   signatures: true,
+  etapes: {
+    orderBy: { ordre: 'asc' as const },
+    include: { piecesJointes: true },
+  },
   historiqueStatuts: {
     orderBy: { dateChangement: 'desc' as const },
     include: { utilisateur: { select: { id: true, nom: true, prenom: true } } },
@@ -90,7 +100,15 @@ export class InterventionsService {
       },
     });
 
-    return this.serialize(intervention);
+    await this.prisma.etapeIntervention.createMany({
+      data: TITRES_ETAPES_PAR_DEFAUT.map((titre, index) => ({
+        interventionId: intervention.id,
+        ordre: index + 1,
+        titre,
+      })),
+    });
+
+    return this.findOne(intervention.id, user);
   }
 
   async findAll(user: AuthenticatedUser, filter: FilterInterventionsDto) {

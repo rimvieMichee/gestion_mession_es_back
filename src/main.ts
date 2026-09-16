@@ -46,6 +46,7 @@ async function bootstrap() {
     .addTag('Signatures', 'Signatures électroniques (technicien et/ou client) sur une intervention')
     .addTag('Matériel & stock', "Pièces détachées/consommables et mouvements de stock (hors dossier technique d'origine)")
     .addTag('Plans de maintenance', "Plans de maintenance préventive récurrents (hors dossier technique d'origine)")
+    .addTag('Étapes de mission', "Timeline Début/En cours/Terminé d'une intervention, avec commentaire et pièces jointes par étape (hors dossier technique d'origine)")
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document, {

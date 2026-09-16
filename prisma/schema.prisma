@@ -305,6 +305,7 @@ model Intervention {
   notifications     Notification[]
   historiqueStatuts HistoriqueStatut[]
   mouvementsStock   MouvementStock[]
+  etapes            EtapeIntervention[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -345,9 +346,52 @@ model PieceJointe {
   dateAjout      DateTime @default(now()) @map("date_ajout")
   interventionId Int      @map("id_intervention")
 
-  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  // ⚠️ Hors dossier technique d'origine : rattachement optionnel à une étape
+  // de mission (voir `EtapeIntervention`), ajouté à la demande du 2026-09-16.
+  // `null` pour une pièce jointe globale à l'intervention, comme avant.
+  etapeId Int? @map("id_etape")
+
+  intervention Intervention       @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  etape        EtapeIntervention? @relation(fields: [etapeId], references: [id], onDelete: SetNull)
 
   @@map("piece_jointe")
+}
+
+// ---------------------------------------------------------------------------
+// Étapes de mission
+// ---------------------------------------------------------------------------
+// ⚠️ Hors dossier technique d'origine (le dossier ne modélise que le statut
+// global à 9 valeurs de l'intervention, pas de sous-étapes). Ajouté à la
+// demande du 2026-09-16 : le mobile affichait déjà 3 étapes (Début / En
+// cours / Terminé) recalculées côté client à partir du statut, sans aucune
+// persistance dédiée — chaque étape a maintenant son propre statut, un
+// commentaire technicien et ses pièces jointes (photo/document).
+// 3 étapes sont créées automatiquement à la création de l'intervention
+// (voir InterventionsService.create).
+
+enum StatutEtape {
+  A_FAIRE
+  EN_COURS
+  TERMINEE
+}
+
+model EtapeIntervention {
+  id              Int         @id @default(autoincrement()) @map("id_etape")
+  interventionId  Int         @map("id_intervention")
+  ordre           Int
+  titre           String
+  statut          StatutEtape @default(A_FAIRE)
+  commentaire     String?     @db.Text
+  dateRealisation DateTime?   @map("date_realisation")
+
+  intervention  Intervention  @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  piecesJointes PieceJointe[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([interventionId, ordre])
+  @@map("etape_intervention")
 }
 
 model Signature {
