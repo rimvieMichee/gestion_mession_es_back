@@ -115,6 +115,12 @@ export class InterventionsService {
     return this.serialize(intervention);
   }
 
+  async remove(id: number) {
+    await this.getOrThrow(id);
+    await this.prisma.intervention.delete({ where: { id } });
+    return { success: true };
+  }
+
   async updateCompteRendu(id: number, dto: UpdateCompteRenduDto, user: AuthenticatedUser) {
     const intervention = await this.getOrThrow(id);
     assertCanActOnIntervention(user, intervention);

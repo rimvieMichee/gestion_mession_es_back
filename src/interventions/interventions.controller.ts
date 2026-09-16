@@ -21,6 +21,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedUser } from '../auth/types/jwt-payload.type';
 import { STAFF_MANAGER_ROLES } from '../common/constants/roles.constant';
+import { SuccessResponseEntity } from '../common/entities/success-response.entity';
 import { AssignTechnicienDto } from './dto/assign-technicien.dto';
 import { ChangeStatutDto } from './dto/change-statut.dto';
 import { CreateInterventionDto } from './dto/create-intervention.dto';
@@ -81,6 +82,18 @@ export class InterventionsController {
     @Body() dto: UpdateInterventionDto,
   ): Promise<InterventionEntity> {
     return this.interventionsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(...STAFF_MANAGER_ROLES)
+  @ApiOperation({
+    summary: "Supprimer une intervention",
+    description:
+      'Supprime aussi en cascade tout ce qui lui est rattaché (techniciens affectés, pièces jointes, signatures, incidents, fiche de connaissance, notifications, historique de statuts).',
+  })
+  @ApiOkResponse({ type: SuccessResponseEntity })
+  remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseEntity> {
+    return this.interventionsService.remove(id);
   }
 
   @Patch(':id/compte-rendu')
