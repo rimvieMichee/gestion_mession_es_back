@@ -39,6 +39,13 @@ enum ModeIntervention {
   A_DISTANCE
 }
 
+/// Hors dossier technique d'origine — distinction curative/préventive
+/// demandée pour le formulaire de création de mission (2026-09-16).
+enum NatureIntervention {
+  CURATIVE
+  PREVENTIVE
+}
+
 enum NiveauCriticite {
   FAIBLE
   MOYEN
@@ -255,6 +262,16 @@ model Intervention {
   observationsTechnicien String?            @map("observations_technicien") @db.Text
   observationsClient     String?            @map("observations_client") @db.Text
   recommandations        String?            @db.Text
+
+  // ⚠️ Champs hors dossier technique d'origine, ajoutés à la demande du
+  // 2026-09-16 pour le formulaire de création de mission du panneau web
+  // (catégorisation libre côté manager, sans lien avec le référentiel Équipement).
+  natureIntervention NatureIntervention? @map("nature_intervention")
+  typeEquipement     String?             @map("type_equipement_libre")
+  niveauRisque       NiveauCriticite?    @map("niveau_risque")
+  typeDefaillance    String?             @map("type_defaillance")
+  causeRacine        String?             @map("cause_racine") @db.Text
+  datePlanifiee      DateTime?           @map("date_planifiee")
 
   clientId      Int  @map("id_client")
   siteId        Int  @map("id_site")

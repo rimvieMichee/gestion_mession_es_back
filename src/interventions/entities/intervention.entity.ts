@@ -10,6 +10,8 @@ import { SiteEntity } from '../../sites/entities/site.entity';
 import { TypeFicheEntity } from '../../type-fiches/entities/type-fiche.entity';
 import {
   ModeIntervention,
+  NatureIntervention,
+  NiveauCriticite,
   StatutIntervention,
 } from '../../../generated/prisma/enums';
 
@@ -149,6 +151,35 @@ export class InterventionEntity {
     example: 'Prévoir le remplacement du switch de secours',
   })
   recommandations: string | null;
+
+  // ⚠️ Champs hors dossier technique d'origine — voir schema.prisma.
+
+  @ApiPropertyOptional({ enum: NatureIntervention, nullable: true, example: NatureIntervention.CURATIVE })
+  natureIntervention: NatureIntervention | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'Serveur' })
+  typeEquipement: string | null;
+
+  @ApiPropertyOptional({ enum: NiveauCriticite, nullable: true, example: NiveauCriticite.MOYEN })
+  niveauRisque: NiveauCriticite | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'Défaillance électrique' })
+  typeDefaillance: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'Onduleur hors service depuis plusieurs semaines',
+  })
+  causeRacine: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-01T09:00:00.000Z',
+  })
+  datePlanifiee: Date | null;
 
   @ApiProperty({ example: 1, description: 'id_client' })
   clientId: number;

@@ -68,6 +68,12 @@ export class InterventionsService {
         typeFicheId: dto.typeFicheId,
         responsableId: dto.responsableId,
         statut: StatutIntervention.NOUVELLE,
+        natureIntervention: dto.natureIntervention,
+        typeEquipement: dto.typeEquipement,
+        niveauRisque: dto.niveauRisque,
+        typeDefaillance: dto.typeDefaillance,
+        causeRacine: dto.causeRacine,
+        datePlanifiee: dto.datePlanifiee ? new Date(dto.datePlanifiee) : undefined,
         techniciens: dto.technicienIds
           ? { create: dto.technicienIds.map((technicienId) => ({ technicienId })) }
           : undefined,
@@ -109,6 +115,7 @@ export class InterventionsService {
       data: {
         ...dto,
         date: dto.date ? new Date(dto.date) : undefined,
+        datePlanifiee: dto.datePlanifiee ? new Date(dto.datePlanifiee) : undefined,
       },
       include: FULL_INCLUDE,
     });

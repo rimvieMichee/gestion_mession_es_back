@@ -23,6 +23,7 @@ import { FichesConnaissanceModule } from './fiches-connaissance/fiches-connaissa
 import { NotificationsModule } from './notifications/notifications.module';
 import { MaterielsModule } from './materiels/materiels.module';
 import { PlansMaintenanceModule } from './plans-maintenance/plans-maintenance.module';
+import { InterventionMaterielsModule } from './intervention-materiels/intervention-materiels.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PlansMaintenanceModule } from './plans-maintenance/plans-maintenance.mo
     NotificationsModule,
     MaterielsModule,
     PlansMaintenanceModule,
+    InterventionMaterielsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

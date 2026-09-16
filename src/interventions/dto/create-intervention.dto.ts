@@ -9,7 +9,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { ModeIntervention } from '../../../generated/prisma/enums';
+import { ModeIntervention, NatureIntervention, NiveauCriticite } from '../../../generated/prisma/enums';
 
 export class CreateInterventionDto {
   /** Date de l'intervention (ISO 8601) */
@@ -75,4 +75,43 @@ export class CreateInterventionDto {
   @Type(() => Number)
   @IsInt({ each: true })
   technicienIds?: number[];
+
+  // ⚠️ Champs hors dossier technique d'origine (voir schema.prisma), ajoutés
+  // pour le formulaire de création de mission du panneau web.
+
+  /** Nature de l'intervention (curative ou préventive) */
+  @ApiPropertyOptional({ enum: NatureIntervention, example: NatureIntervention.CURATIVE })
+  @IsOptional()
+  @IsEnum(NatureIntervention)
+  natureIntervention?: NatureIntervention;
+
+  /** Catégorie d'équipement concerné (texte libre, ex. "Serveur", "Poste de travail") */
+  @ApiPropertyOptional({ example: 'Serveur' })
+  @IsOptional()
+  @IsString()
+  typeEquipement?: string;
+
+  /** Niveau de risque associé à l'intervention */
+  @ApiPropertyOptional({ enum: NiveauCriticite, example: NiveauCriticite.MOYEN })
+  @IsOptional()
+  @IsEnum(NiveauCriticite)
+  niveauRisque?: NiveauCriticite;
+
+  /** Type de défaillance constatée (pertinent pour une intervention curative) */
+  @ApiPropertyOptional({ example: 'Défaillance électrique' })
+  @IsOptional()
+  @IsString()
+  typeDefaillance?: string;
+
+  /** Cause racine de la défaillance, si connue */
+  @ApiPropertyOptional({ example: 'Onduleur hors service depuis plusieurs semaines' })
+  @IsOptional()
+  @IsString()
+  causeRacine?: string;
+
+  /** Date planifiée (pertinent pour une intervention préventive), ISO 8601 */
+  @ApiPropertyOptional({ example: '2026-10-01T09:00:00.000Z' })
+  @IsOptional()
+  @IsDateString()
+  datePlanifiee?: string;
 }
