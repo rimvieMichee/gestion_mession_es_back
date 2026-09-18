@@ -86,14 +86,15 @@ model Client {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  sites         Site[]
-  contacts      Contact[]
-  contrats      Contrat[]
-  projets       Projet[]
-  equipements   Equipement[]
-  applications  Application[]
-  utilisateurs  Utilisateur[]
-  interventions Intervention[]
+  sites            Site[]
+  contacts         Contact[]
+  contrats         Contrat[]
+  projets          Projet[]
+  equipements      Equipement[]
+  applications     Application[]
+  utilisateurs     Utilisateur[]
+  interventions    Intervention[]
+  plansMaintenance PlanMaintenance[]
 
   @@map("client")
 }
@@ -104,9 +105,10 @@ model Site {
   adresse  String @db.Text
   clientId Int    @map("id_client")
 
-  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  equipements   Equipement[]
-  interventions Intervention[]
+  client           Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  equipements      Equipement[]
+  interventions    Intervention[]
+  plansMaintenance PlanMaintenance[]
 
   @@map("site")
 }
@@ -209,10 +211,11 @@ model Utilisateur {
   role   Role    @relation(fields: [roleId], references: [id], onDelete: Restrict)
   client Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
-  interventionsResponsable Intervention[]           @relation("InterventionResponsable")
-  interventionsTechnicien  InterventionTechnicien[]
-  notifications            Notification[]
-  historiqueStatuts        HistoriqueStatut[]
+  interventionsResponsable    Intervention[]           @relation("InterventionResponsable")
+  interventionsTechnicien     InterventionTechnicien[]
+  notifications               Notification[]
+  historiqueStatuts           HistoriqueStatut[]
+  plansMaintenanceResponsable PlanMaintenance[]        @relation("PlanMaintenanceResponsable")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -231,6 +234,7 @@ model TypeFiche {
 
   champsPersonnalises ChampPersonnalise[]
   interventions       Intervention[]
+  plansMaintenance    PlanMaintenance[]
 
   @@map("type_fiche")
 }
@@ -278,9 +282,9 @@ model Intervention {
   typeEquipement     String?               @map("type_equipement_libre")
   niveauRisque       NiveauCriticite?      @map("niveau_risque")
   priorite           PrioriteIntervention? @map("priorite")
-  typeDefaillance    String?             @map("type_defaillance")
-  causeRacine        String?             @map("cause_racine") @db.Text
-  datePlanifiee      DateTime?           @map("date_planifiee")
+  typeDefaillance    String?               @map("type_defaillance")
+  causeRacine        String?               @map("cause_racine") @db.Text
+  datePlanifiee      DateTime?             @map("date_planifiee")
 
   clientId      Int  @map("id_client")
   siteId        Int  @map("id_site")
@@ -508,7 +512,7 @@ model Materiel {
   stockActuel  Int      @default(0) @map("stock_actuel")
   seuilMin     Int      @map("seuil_min")
   seuilMax     Int      @map("seuil_max")
-  prixUnitaire Decimal  @db.Decimal(12, 2) @map("prix_unitaire")
+  prixUnitaire Decimal  @map("prix_unitaire") @db.Decimal(12, 2)
   fournisseur  String
   emplacement  String
   createdAt    DateTime @default(now()) @map("created_at")
@@ -553,8 +557,24 @@ model PlanMaintenance {
   dureeEstimee       Int                  @map("duree_estimee")
   piecesRequises     String[]             @default([]) @map("pieces_requises")
   instructions       String               @db.Text
-  createdAt          DateTime             @default(now()) @map("created_at")
-  updatedAt          DateTime             @updatedAt @map("updated_at")
+
+  // ⚠️ Hors dossier technique d'origine, ajoutés à la demande du 2026-09-18 :
+  // le plan doit référencer un client/site/type de fiche/responsable réels
+  // pour pouvoir générer une intervention valide (POST /interventions les
+  // exige tous), ce qui manquait jusqu'ici — "Générer Maintenance" créait
+  // des requêtes systématiquement rejetées par le back.
+  clientId      Int @map("id_client")
+  siteId        Int @map("id_site")
+  typeFicheId   Int @map("id_type_fiche")
+  responsableId Int @map("id_responsable")
+
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  site        Site        @relation(fields: [siteId], references: [id], onDelete: Restrict)
+  typeFiche   TypeFiche   @relation(fields: [typeFicheId], references: [id], onDelete: Restrict)
+  responsable Utilisateur @relation("PlanMaintenanceResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("plan_maintenance")
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePlanMaintenanceDto } from './dto/create-plan-maintenance.dto';
 import { UpdatePlanMaintenanceDto } from './dto/update-plan-maintenance.dto';
@@ -7,7 +7,8 @@ import { UpdatePlanMaintenanceDto } from './dto/update-plan-maintenance.dto';
 export class PlansMaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(dto: CreatePlanMaintenanceDto) {
+  async create(dto: CreatePlanMaintenanceDto) {
+    await this.assertSiteBelongsToClient(dto.siteId, dto.clientId);
     return this.prisma.planMaintenance.create({
       data: {
         ...dto,
@@ -36,7 +37,10 @@ export class PlansMaintenanceService {
   }
 
   async update(id: number, dto: UpdatePlanMaintenanceDto) {
-    await this.ensureExists(id);
+    const existing = await this.ensureExists(id);
+    if (dto.siteId !== undefined || dto.clientId !== undefined) {
+      await this.assertSiteBelongsToClient(dto.siteId ?? existing.siteId, dto.clientId ?? existing.clientId);
+    }
     return this.prisma.planMaintenance.update({
       where: { id },
       data: {
@@ -64,5 +68,12 @@ export class PlansMaintenanceService {
       throw new NotFoundException(`Plan de maintenance ${id} introuvable`);
     }
     return plan;
+  }
+
+  private async assertSiteBelongsToClient(siteId: number, clientId: number): Promise<void> {
+    const site = await this.prisma.site.findUnique({ where: { id: siteId } });
+    if (!site || site.clientId !== clientId) {
+      throw new BadRequestException("Le site indiqué n'appartient pas à ce client");
+    }
   }
 }

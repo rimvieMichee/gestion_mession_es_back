@@ -80,4 +80,24 @@ export class CreatePlanMaintenanceDto {
   @ApiProperty({ example: 'Vérifier la tension de charge, remplacer les batteries de plus de 3 ans, tester la bascule secteur/onduleur.' })
   @IsString()
   instructions: string;
+
+  /** Client concerné (nécessaire pour générer une intervention à partir du plan) */
+  @ApiProperty({ example: 1, description: 'id_client' })
+  @IsInt()
+  clientId: number;
+
+  /** Site concerné (doit appartenir au client indiqué) */
+  @ApiProperty({ example: 1, description: 'id_site' })
+  @IsInt()
+  siteId: number;
+
+  /** Type de fiche à utiliser pour l'intervention générée */
+  @ApiProperty({ example: 1, description: 'id_type_fiche' })
+  @IsInt()
+  typeFicheId: number;
+
+  /** Responsable de l'intervention générée */
+  @ApiProperty({ example: 1, description: 'id_responsable' })
+  @IsInt()
+  responsableId: number;
 }

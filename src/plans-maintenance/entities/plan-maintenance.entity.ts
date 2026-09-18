@@ -41,6 +41,18 @@ export class PlanMaintenanceEntity {
   @ApiProperty({ example: 'Vérifier la tension de charge, remplacer les batteries de plus de 3 ans...' })
   instructions: string;
 
+  @ApiProperty({ example: 1, description: 'id_client' })
+  clientId: number;
+
+  @ApiProperty({ example: 1, description: 'id_site' })
+  siteId: number;
+
+  @ApiProperty({ example: 1, description: 'id_type_fiche' })
+  typeFicheId: number;
+
+  @ApiProperty({ example: 1, description: 'id_responsable' })
+  responsableId: number;
+
   @ApiProperty({ example: '2026-09-14T10:45:23.564Z' })
   createdAt: Date;
 
